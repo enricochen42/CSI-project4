@@ -50,15 +50,15 @@
 
 .logo-text {
     font-size: 1.75rem;
-    font-weight: 800;
-    color: #000;
+    font-weight: 500;
+    color: #2d2d2d;
     text-decoration: none;
     letter-spacing: -0.02em;
     transition: color 0.3s ease;
 }
 
 .logo-text:hover {
-    color: #333;
+    color: #4a4a4a;
     text-decoration: none;
 }
 
@@ -71,9 +71,9 @@
 }
 
 .nav-link {
-    color: #1a1a1a;
+    color: #2d2d2d;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 400;
     font-size: 1rem;
     position: relative;
     padding: 0.5rem 0;
@@ -99,7 +99,7 @@
 
 .nav-link.active {
     color: #667eea;
-    font-weight: 700;
+    font-weight: 500;
 }
 
 .nav-link.active::after,
@@ -118,7 +118,7 @@
     border: none;
     padding: 0.625rem;
     cursor: pointer;
-    color: #1a1a1a;
+    color: #2d2d2d;
     display: flex;
     align-items: center;
     justify-content: center;

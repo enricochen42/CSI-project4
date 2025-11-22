@@ -4,6 +4,7 @@ using FlashcardApp.Components;
 using FlashcardApp.Infrastructure.Data;
 using FlashcardApp.Infrastructure.Repositories;
 using FlashcardApp.Infrastructure.Services;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,10 +13,27 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Configure form options to allow larger file uploads (default is 512KB, increase to 50MB)
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 52428800; // 50MB in bytes
+    options.ValueLengthLimit = int.MaxValue;
+    options.ValueCountLimit = int.MaxValue;
+});
+
+// Configure Kestrel server limits to allow larger request body sizes
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 52428800; // 50MB in bytes
+});
+
 // Add API controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add memory cache for temporary text storage
+builder.Services.AddMemoryCache();
 
 // Add database
 builder.Services.AddDbContext<FlashcardDbContext>(options =>

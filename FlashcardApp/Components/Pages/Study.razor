@@ -9,16 +9,16 @@
 
 <div class="page-container fade-in-up">
     <div class="page-header">
-        <h1 class="page-title">Study Mode</h1>
-        <p class="page-subtitle">Review and master your flashcards with beautiful animations</p>
+        <h1 class="page-title">Time to Study!</h1>
+        <p class="page-subtitle">Flip through your flashcards and get ready for your exam</p>
     </div>
 
     @if (decks == null || !decks.Any())
     {
         <div class="empty-state modern-card">
             <div class="empty-icon">📚</div>
-            <h3>No decks found</h3>
-            <p>Upload some slides to generate flashcards first!</p>
+            <h3>No flashcards yet</h3>
+            <p>Upload your lecture slides to get started!</p>
             <a href="/upload" class="btn btn-primary">Create Flashcards</a>
         </div>
     }
@@ -64,12 +64,12 @@
                             <div class="flashcard-front">
                                 <div class="flashcard-label">Question</div>
                                 <div class="flashcard-content-text">@currentFlashcards[currentIndex].Question</div>
-                                <div class="flashcard-hint">Click to reveal answer</div>
+                                <div class="flashcard-hint">Click anywhere to see the answer</div>
                             </div>
                             <div class="flashcard-back">
                                 <div class="flashcard-label">Answer</div>
                                 <div class="flashcard-content-text">@currentFlashcards[currentIndex].Answer</div>
-                                <div class="flashcard-hint">Click to flip back</div>
+                                <div class="flashcard-hint">Click to flip back to the question</div>
                             </div>
                         </div>
                     </div>
@@ -79,7 +79,7 @@
         else if (selectedDeckId > 0)
         {
             <div class="alert alert-warning modern-card">
-                This deck has no flashcards yet.
+                This deck is empty. Add some flashcards to start studying!
             </div>
         }
     }

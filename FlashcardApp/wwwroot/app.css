@@ -6,10 +6,11 @@ html, body {
     padding: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: #1a1a1a;
+    color: #2d2d2d;
     line-height: 1.6;
     font-size: 16px;
     background: #f8f9fa;
+    font-weight: 300;
 }
 
 /* Hide any sidebar remnants */
@@ -38,7 +39,7 @@ a:hover, .btn-link:hover {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
     padding: 0.875rem 2.25rem;
-    font-weight: 600;
+    font-weight: 400;
     font-size: 1rem;
     border-radius: 12px;
     transition: all 0.3s ease;
@@ -53,11 +54,11 @@ a:hover, .btn-link:hover {
 }
 
 .btn-secondary {
-    color: #1a1a1a !important;
+    color: #2d2d2d !important;
     background: #fff;
-    border: 2px solid rgba(0, 0, 0, 0.15);
+    border: 2px solid rgba(0, 0, 0, 0.12);
     padding: 0.875rem 2.25rem;
-    font-weight: 600;
+    font-weight: 400;
     font-size: 1rem;
     border-radius: 12px;
     transition: all 0.3s ease;
@@ -80,10 +81,10 @@ a:hover, .btn-link:hover {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-weight: 800;
-    letter-spacing: -0.03em;
+    font-weight: 500;
+    letter-spacing: -0.02em;
     line-height: 1.2;
-    color: #000;
+    color: #2d2d2d;
 }
 
 h1 {
@@ -105,7 +106,8 @@ h4 {
 p, .lead {
     font-size: 1.125rem;
     line-height: 1.7;
-    color: #333;
+    color: #5a5a5a;
+    font-weight: 300;
 }
 
 h1:focus {
@@ -189,8 +191,8 @@ h1:focus {
 }
 
 .form-label {
-    font-weight: 600;
-    color: #000;
+    font-weight: 400;
+    color: #2d2d2d;
     margin-bottom: 0.5rem;
     font-size: 0.95rem;
 }
@@ -252,11 +254,11 @@ h1:focus {
 
 /* Gradient Text */
 .gradient-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #9ca8ff 0%, #b5a5f5 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-weight: 800;
+    font-weight: 400;
 }
 
 /* Text visibility improvements */
@@ -273,17 +275,20 @@ h1:focus {
 
 /* Ensure all text is visible */
 .card-title, .card-text {
-    color: #1a1a1a;
+    color: #2d2d2d;
 }
 
 .card-title {
-    font-weight: 700;
+    font-weight: 500;
     font-size: 1.25rem;
+    color: #2d2d2d;
 }
 
 .card-text {
     font-size: 1rem;
     line-height: 1.6;
+    color: #5a5a5a;
+    font-weight: 300;
 }
 
 /* Badge */

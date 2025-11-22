@@ -10,7 +10,7 @@
 <div class="page-container fade-in-up">
     <div class="page-header">
         <h1 class="page-title">Create Your Flashcards</h1>
-        <p class="page-subtitle">Upload PDF files or images of your lecture slides to generate flashcards using AI</p>
+        <p class="page-subtitle">Upload your lecture slides and we'll help you turn them into flashcards for studying</p>
     </div>
 
     <div class="upload-section modern-card">
@@ -24,8 +24,8 @@
                 {
                     <div class="upload-content">
                         <div class="upload-icon">📄</div>
-                        <h3>Drop your file here or click to browse</h3>
-                        <p>Supported formats: PDF, JPG, PNG</p>
+                        <h3>Drop your slides here or click to browse</h3>
+                        <p>We support PDF files (and images coming soon!)</p>
                     </div>
                 }
                 else
@@ -50,7 +50,7 @@
             {
                 <div class="alert alert-info mt-3" role="alert">
                     <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                    Processing file and extracting text...
+                    Reading your file and pulling out the text...
                 </div>
             }
 
@@ -59,7 +59,7 @@
                 <div class="extracted-text-section mt-4">
                     <label class="form-label fw-bold">Extracted Text Preview:</label>
                     <textarea class="form-control extracted-textarea" rows="10" readonly>@extractedText</textarea>
-                    <div class="form-text">Review the extracted text, then click "Generate Flashcards" to use AI.</div>
+                    <div class="form-text">Take a quick look at what we found, then click "Generate Flashcards" when you're ready.</div>
                 </div>
             }
 
@@ -214,8 +214,9 @@
 
         try
         {
-            // Save the file
-            using var stream = selectedFile.OpenReadStream();
+            // Save the file (allow up to 50MB)
+            const long maxFileSize = 52428800; // 50MB in bytes
+            using var stream = selectedFile.OpenReadStream(maxAllowedSize: maxFileSize);
             var filePath = await FileProcessingService.SaveFileAsync(stream, selectedFile.Name);
 
             // Extract text if PDF
@@ -225,22 +226,22 @@
                 
                 if (string.IsNullOrWhiteSpace(extractedText))
                 {
-                    errorMessage = "No text could be extracted from the PDF. The file might be image-based or corrupted.";
+                    errorMessage = "Hmm, we couldn't find any text in that PDF. It might be just images, or the file could be corrupted. Try a different file!";
                 }
             }
             else if (FileProcessingService.IsImageFile(selectedFile.Name))
             {
-                errorMessage = "Image OCR is not yet implemented. Please upload a PDF file for now.";
+                errorMessage = "We're still working on image support. For now, please upload a PDF file with text you can select.";
             }
             else
             {
-                errorMessage = "Unsupported file format. Please upload a PDF or image file.";
+                errorMessage = "Sorry, we don't support that file type yet. Please upload a PDF file.";
             }
 
             // If we have text, show it and allow user to proceed to generation
             if (string.IsNullOrWhiteSpace(extractedText) || extractedText.Length < 50)
             {
-                errorMessage = "Not enough text extracted. The file might be image-based. Please ensure your PDF contains selectable text.";
+                errorMessage = "We didn't find enough text in that file. Make sure your PDF has text you can select (not just images).";
             }
         }
         catch (Exception ex)

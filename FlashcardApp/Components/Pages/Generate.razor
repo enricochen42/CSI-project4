@@ -12,8 +12,8 @@
 
 <div class="page-container fade-in-up">
     <div class="page-header">
-        <h1 class="page-title">AI-Generated Flashcards</h1>
-        <p class="page-subtitle">Review and edit the flashcards generated from your slides, then save them to a deck.</p>
+        <h1 class="page-title">Your Flashcards Are Ready!</h1>
+        <p class="page-subtitle">Here are the flashcards we made from your slides. Check them out, make any changes you want, then save them to a deck.</p>
     </div>
 
     @if (isGenerating)
@@ -23,8 +23,8 @@
                 <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <h3>Generating flashcards with AI...</h3>
-                <p>This may take a moment. Our AI is analyzing your content and creating intelligent flashcards.</p>
+                <h3>Creating your flashcards...</h3>
+                <p>Give us a sec! We're reading through your slides and making flashcards for you.</p>
             </div>
         </div>
     }
@@ -40,10 +40,10 @@
     {
         <div class="flashcards-container modern-card">
             <div class="flashcards-header">
-                <h2 class="flashcards-title">Generated Flashcards <span class="badge-count">@generatedFlashcards.Count</span></h2>
+                <h2 class="flashcards-title">Your Flashcards <span class="badge-count">@generatedFlashcards.Count</span></h2>
                 <div class="deck-selector">
                     <select class="form-select" @bind="selectedDeckId">
-                        <option value="0">Create New Deck</option>
+                        <option value="0">Make a new deck</option>
                         @foreach (var deck in decks)
                         {
                             <option value="@deck.Id">@deck.Name</option>
@@ -52,7 +52,7 @@
                     @if (selectedDeckId == 0)
                     {
                         <input type="text" class="form-control ms-2" style="width: 250px;" 
-                               placeholder="New deck name" @bind="newDeckName" />
+                               placeholder="What should we call this deck?" @bind="newDeckName" />
                     }
                 </div>
             </div>
@@ -67,7 +67,7 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" @bind="card.IsSelected" id="check-@index" />
                                 <label class="form-check-label" for="check-@index">
-                                    Include this flashcard
+                                    Keep this one
                                 </label>
                             </div>
                             <button class="btn-remove" @onclick="() => RemoveCard(index)" title="Remove">
@@ -96,7 +96,7 @@
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
                     }
-                    Save Selected Flashcards
+                    Save These Flashcards
                 </button>
                 <button class="btn btn-secondary" @onclick="Cancel">
                     Cancel
@@ -297,7 +297,7 @@
         }
         else
         {
-            errorMessage = "No text content provided. Please upload a file first.";
+                errorMessage = "Oops! Looks like we don't have any content to work with. Please upload your slides first.";
         }
     }
 
@@ -327,7 +327,7 @@
 
             if (generatedFlashcards.Count == 0)
             {
-                errorMessage = "No flashcards could be generated. The AI response might not be in the expected format. Try again or check your AI configuration.";
+                errorMessage = "Hmm, we couldn't create any flashcards from that. Try uploading your slides again, or check if there's enough content to work with.";
             }
         }
         catch (Exception ex)
@@ -354,13 +354,13 @@
         
         if (!selectedCards.Any())
         {
-            errorMessage = "Please select at least one flashcard to save.";
+            errorMessage = "You'll need to pick at least one flashcard to save!";
             return;
         }
 
         if (selectedDeckId == 0 && string.IsNullOrWhiteSpace(newDeckName))
         {
-            errorMessage = "Please enter a name for the new deck or select an existing deck.";
+            errorMessage = "Don't forget to name your new deck, or pick one you already have!";
             return;
         }
 
