@@ -1,8 +1,10 @@
 @page "/upload"
 @using FlashcardApp.Application.Interfaces
 @using Microsoft.AspNetCore.Components.Forms
+@using System.Net.Http.Json
 @inject IFileProcessingService FileProcessingService
 @inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
 @rendermode InteractiveServer
 
 <PageTitle>Create - Flashcard AI</PageTitle>
@@ -260,17 +262,56 @@
         selectedFile = null;
     }
 
-    private void GenerateFlashcards()
+    private async Task GenerateFlashcards()
     {
-        if (!string.IsNullOrWhiteSpace(extractedText) && extractedText.Length >= 50)
+        if (string.IsNullOrWhiteSpace(extractedText) || extractedText.Length < 50)
         {
-            Navigation.NavigateTo($"/generate?text={Uri.EscapeDataString(extractedText)}");
+            return;
+        }
+
+        try
+        {
+            isProcessing = true;
+            errorMessage = string.Empty;
+
+            // Store text via API to avoid URI length limits
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri(Navigation.BaseUri);
+            var request = new { Text = extractedText };
+            var response = await httpClient.PostAsJsonAsync("api/TextStorage/store", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<StoreTextResponse>();
+                if (result != null && !string.IsNullOrEmpty(result.Token))
+                {
+                    // Navigate with token instead of full text
+                    Navigation.NavigateTo($"/generate?token={result.Token}");
+                    return;
+                }
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            errorMessage = $"Failed to prepare content for generation: {response.StatusCode}. Please try again.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
         }
     }
 
     public class UploadModel
     {
         // Placeholder for form model
+    }
+
+    private class StoreTextResponse
+    {
+        public string Token { get; set; } = string.Empty;
     }
 }
 

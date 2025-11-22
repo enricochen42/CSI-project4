@@ -20,45 +20,28 @@ The project uses .NET 9.0. Make sure you have it installed, then restore package
 dotnet restore
 ```
 
-### 2. AI Configuration (Choose One)
+### 2. Configure AI API Key
 
-#### Option A: Hugging Face API (Recommended for Quick Start)
+The app uses **Groq AI** to generate flashcards. We use User Secrets to store the API key locally.
 
-1. Sign up at [Hugging Face](https://huggingface.co/)
-2. Get your API token from [Settings > Access Tokens](https://huggingface.co/settings/tokens)
-3. Add to `appsettings.json` or `appsettings.Development.json`:
-
-```json
-{
-  "HuggingFace": {
-    "ApiKey": "your-api-key-here",
-    "Model": "mistralai/Mistral-7B-Instruct-v0.2"
-  }
-}
+**Set your API key:**
+```bash
+cd FlashcardApp
+dotnet user-secrets set "Groq:ApiKey" "your-groq-api-key-here"
 ```
 
-**Free Tier**: 1000 requests/month
-
-#### Option B: Ollama (Local, Unlimited, Private)
-
-1. Install [Ollama](https://ollama.ai/)
-2. Pull a model: `ollama pull mistral` (or `llama2`, `phi3`, etc.)
-3. Start Ollama (it runs on `http://localhost:11434` by default)
-4. No API key needed! The app will automatically use Ollama if Hugging Face is not configured.
-
-**Benefits**: 
-- Completely free
-- Unlimited usage
-- Privacy - data never leaves your computer
-- No internet required after setup
+**Get your API key:**
+1. Sign up at [Groq Console](https://console.groq.com/)
+2. Create an API key
 
 ### 3. Run the Application
 
 ```bash
+cd FlashcardApp
 dotnet run
 ```
 
-The app will be available at `https://localhost:5001` (or the port shown in the console).
+The app will be available at `https://localhost:7199` or `http://localhost:5037`.
 
 ## Usage
 
@@ -73,11 +56,9 @@ The app will be available at `https://localhost:5001` (or the port shown in the 
 
 The app uses SQLite (stored as `flashcards.db` in the project root). The database is automatically created on first run.
 
-## Future Enhancements
+## Notes
 
-- Image OCR support (for image-based PDFs)
-- Spaced repetition algorithm
-- Progress tracking and statistics
-- Export/import flashcards
-- Multiple study modes (quiz, typing, etc.)
+- User Secrets are stored locally on your machine and never committed to Git
+- Each team member sets their own API key
+- The app automatically loads User Secrets in Development mode
 

@@ -371,10 +371,22 @@ FodyWeavers.xsd
 *.userosscache
 *.sln.docstates
 
-# Sensitive data files (keep appsettings.Development.json as template)
+# Sensitive data files (keep appsettings.Development.json.example as template)
+appsettings.Development.json
 appsettings.Production.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json.example
 secrets.json
 *.secrets.json
+
+# Environment variables file
+.env
+.env.local
+.env.*.local
+
+# User Secrets (already handled by .NET, but explicitly ignore)
+**/Properties/launchSettings.json.local
 
 # Database files
 *.db

@@ -24,21 +24,113 @@ public class AIGenerationService : IAIGenerationService
     {
         try
         {
-            var apiKey = _configuration["HuggingFace:ApiKey"] ?? "";
-            var model = _configuration["HuggingFace:Model"] ?? "mistralai/Mistral-7B-Instruct-v0.2";
-
-            if (string.IsNullOrEmpty(apiKey))
+            // Try Groq first (free, fast, reliable)
+            // Check both configuration formats: "Groq:ApiKey" (appsettings/User Secrets) and "Groq__ApiKey" (environment variable)
+            var groqApiKey = _configuration["Groq:ApiKey"] ?? _configuration["Groq__ApiKey"] ?? "";
+            
+            // Debug: Log if API key is found (without exposing the key)
+            if (string.IsNullOrEmpty(groqApiKey))
             {
-                return await GenerateWithOllamaAsync(textContent);
+                _logger.LogWarning("Groq API key not found in configuration. Checked: Groq:ApiKey and Groq__ApiKey");
+            }
+            else
+            {
+                _logger.LogInformation("Groq API key found (length: {Length})", groqApiKey.Length);
+            }
+            
+            if (!string.IsNullOrEmpty(groqApiKey))
+            {
+                try
+                {
+                    var model = _configuration["Groq:Model"] ?? "llama-3.1-8b-instant";
+                    return await GenerateWithGroqAsync(textContent, groqApiKey, model);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Groq generation failed, trying fallback");
+                    // Fall through to try other options
+                }
             }
 
-            return await GenerateWithHuggingFaceAsync(textContent, apiKey, model);
+            // Try HuggingFace next
+            var huggingFaceApiKey = _configuration["HuggingFace:ApiKey"] ?? "";
+            if (!string.IsNullOrEmpty(huggingFaceApiKey))
+            {
+                try
+                {
+                    var model = _configuration["HuggingFace:Model"] ?? "mistralai/Mistral-7B-Instruct-v0.2";
+                    return await GenerateWithHuggingFaceAsync(textContent, huggingFaceApiKey, model);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "HuggingFace generation failed");
+                    throw new Exception("Hugging Face API error. Please check your API key or try Groq instead.");
+                }
+            }
+
+            // No API keys configured - give clear error message
+            throw new Exception(
+                "No AI API key configured. " +
+                "Please set your Groq API key using one of these methods:\n" +
+                "1. Environment variable: $env:Groq__ApiKey = 'your-key-here' (PowerShell) or export Groq__ApiKey='your-key-here' (bash)\n" +
+                "2. User Secrets: dotnet user-secrets set \"Groq:ApiKey\" \"your-key-here\"\n" +
+                "3. appsettings.Development.json: Add your API key to the Groq section\n" +
+                "\nGet your free API key at: https://console.groq.com/"
+            );
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating flashcards with AI");
             throw;
         }
+    }
+
+    private async Task<List<GeneratedFlashcardDto>> GenerateWithGroqAsync(string textContent, string apiKey, string model)
+    {
+        var prompt = BuildPrompt(textContent);
+        
+        var requestBody = new
+        {
+            messages = new[]
+            {
+                new
+                {
+                    role = "user",
+                    content = prompt
+                }
+            },
+            model = model,
+            temperature = 0.7,
+            max_tokens = 4000,
+            top_p = 1,
+            stream = false
+        };
+
+        var json = JsonSerializer.Serialize(requestBody);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        _httpClient.DefaultRequestHeaders.Clear();
+        _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+        var url = "https://api.groq.com/openai/v1/chat/completions";
+        var response = await _httpClient.PostAsync(url, content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Groq API error: {response.StatusCode} - {errorContent}");
+        }
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<GroqResponse>(responseContent);
+
+        if (result == null || result.choices == null || result.choices.Length == 0)
+        {
+            throw new Exception("No response from Groq API");
+        }
+
+        var generatedText = result.choices[0].message?.content ?? "";
+        return ParseFlashcards(generatedText);
     }
 
     private async Task<List<GeneratedFlashcardDto>> GenerateWithHuggingFaceAsync(string textContent, string apiKey, string model)
@@ -83,44 +175,14 @@ public class AIGenerationService : IAIGenerationService
         return ParseFlashcards(generatedText);
     }
 
-    private async Task<List<GeneratedFlashcardDto>> GenerateWithOllamaAsync(string textContent)
-    {
-        var prompt = BuildPrompt(textContent);
-        
-        var requestBody = new
-        {
-            model = "mistral",
-            prompt = prompt,
-            stream = false
-        };
-
-        var json = JsonSerializer.Serialize(requestBody);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        _httpClient.DefaultRequestHeaders.Clear();
-
-        var url = "http://localhost:11434/api/generate";
-        var response = await _httpClient.PostAsync(url, content);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new Exception($"Ollama not available. Please install Ollama and start it, or configure Hugging Face API key.");
-        }
-
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<OllamaResponse>(responseContent);
-
-        if (result == null || string.IsNullOrEmpty(result.response))
-        {
-            throw new Exception("No response from Ollama");
-        }
-
-        return ParseFlashcards(result.response);
-    }
 
     private string BuildPrompt(string textContent)
     {
-        var limitedText = textContent.Length > 3000 ? textContent.Substring(0, 3000) + "..." : textContent;
+        // For Groq and modern APIs, we can send more text (up to ~8000 chars for better context)
+        // For older APIs, limit to 3000
+        var limitedText = textContent.Length > 8000 
+            ? textContent.Substring(0, 8000) + "\n\n[Content truncated due to length...]" 
+            : textContent;
 
         return $@"From the following lecture content, generate 5-10 flashcards suitable for oral exam preparation.
 
@@ -228,8 +290,18 @@ internal class HuggingFaceResponse
     public string? generated_text { get; set; }
 }
 
-internal class OllamaResponse
+internal class GroqResponse
 {
-    public string response { get; set; } = string.Empty;
+    public GroqChoice[]? choices { get; set; }
+}
+
+internal class GroqChoice
+{
+    public GroqMessage? message { get; set; }
+}
+
+internal class GroqMessage
+{
+    public string? content { get; set; }
 }
 

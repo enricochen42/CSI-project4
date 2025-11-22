@@ -3,9 +3,11 @@
 @using FlashcardApp.Application.DTOs
 @using FlashcardApp.Application.Entities
 @using Microsoft.AspNetCore.Components
+@using System.Net.Http.Json
 @inject IAIGenerationService AIGenerationService
 @inject IFlashcardService FlashcardService
 @inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
 @rendermode InteractiveServer
 
 <PageTitle>Generate Flashcards - Flashcard AI</PageTitle>
@@ -277,6 +279,10 @@
 @code {
     [Parameter]
     [SupplyParameterFromQuery]
+    public string? Token { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
     public string? Text { get; set; }
 
     private List<EditableFlashcard> generatedFlashcards = new();
@@ -286,19 +292,63 @@
     private bool isGenerating = false;
     private bool isSaving = false;
     private string errorMessage = string.Empty;
+    private string textContent = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDecks();
         
+        // Try to get text from token first (new method)
+        if (!string.IsNullOrEmpty(Token))
+        {
+            var retrievedText = await RetrieveTextFromToken(Token);
+            if (!string.IsNullOrEmpty(retrievedText))
+            {
+                textContent = retrievedText;
+                await GenerateFlashcards();
+                return;
+            }
+        }
+        
+        // Fallback to old method (query parameter) for backwards compatibility
         if (!string.IsNullOrEmpty(Text))
         {
+            textContent = Text;
             await GenerateFlashcards();
         }
         else
         {
-                errorMessage = "Oops! Looks like we don't have any content to work with. Please upload your slides first.";
+            errorMessage = "Oops! Looks like we don't have any content to work with. Please upload your slides first.";
         }
+    }
+
+    private async Task<string?> RetrieveTextFromToken(string token)
+    {
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri(Navigation.BaseUri);
+            var response = await httpClient.GetAsync($"api/TextStorage/retrieve/{token}");
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<RetrieveTextResponse>();
+                return result?.Text;
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                errorMessage = "The content has expired. Please upload your slides again.";
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Failed to retrieve content: {response.StatusCode}. Please try uploading again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error retrieving content: {ex.Message}";
+        }
+        return null;
     }
 
     private async Task LoadDecks()
@@ -308,7 +358,7 @@
 
     private async Task GenerateFlashcards()
     {
-        if (string.IsNullOrEmpty(Text))
+        if (string.IsNullOrEmpty(textContent))
             return;
 
         isGenerating = true;
@@ -316,7 +366,7 @@
 
         try
         {
-            var flashcards = await AIGenerationService.GenerateFlashcardsAsync(Text);
+            var flashcards = await AIGenerationService.GenerateFlashcardsAsync(textContent);
             
             generatedFlashcards = flashcards.Select(f => new EditableFlashcard
             {
@@ -418,6 +468,11 @@
         public string Question { get; set; } = string.Empty;
         public string Answer { get; set; } = string.Empty;
         public bool IsSelected { get; set; } = true;
+    }
+
+    private class RetrieveTextResponse
+    {
+        public string Text { get; set; } = string.Empty;
     }
 }
 

@@ -6,8 +6,54 @@ using FlashcardApp.Infrastructure.Repositories;
 using FlashcardApp.Infrastructure.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration.Memory;
+using System.Collections.Generic;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load User Secrets - try multiple methods to ensure it works
+// Try standard User Secrets first
+try
+{
+    builder.Configuration.AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true);
+}
+catch
+{
+    // Silently fail, will try manual fallback
+}
+
+// Manual fallback: If API key not loaded, read secrets.json directly in Development mode
+// This ensures the API key is available even if User Secrets isn't loaded properly
+if (builder.Environment.IsDevelopment() && string.IsNullOrEmpty(builder.Configuration["Groq:ApiKey"]))
+{
+    try
+    {
+        var secretsPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Microsoft", "UserSecrets", "FlashcardApp-Secrets", "secrets.json");
+        
+        if (File.Exists(secretsPath))
+        {
+            var secretsJson = File.ReadAllText(secretsPath);
+            var secrets = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(secretsJson);
+            
+            if (secrets != null && secrets.Count > 0)
+            {
+                var memoryConfig = new Dictionary<string, string?>();
+                foreach (var secret in secrets)
+                {
+                    memoryConfig[secret.Key] = secret.Value;
+                }
+                builder.Configuration.AddInMemoryCollection(memoryConfig);
+            }
+        }
+    }
+    catch
+    {
+        // Silently fail - user will get error when trying to use API
+    }
+}
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -50,6 +96,9 @@ builder.Services.AddScoped<IFlashcardService, FlashcardService>();
 builder.Services.AddScoped<IFileProcessingService, FileProcessingService>();
 builder.Services.AddHttpClient<IAIGenerationService, AIGenerationService>();
 builder.Services.AddScoped<IAIGenerationService, AIGenerationService>();
+
+// Configure HttpClient for Blazor components to use relative URLs
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
