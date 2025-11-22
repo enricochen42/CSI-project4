@@ -376,3 +376,11 @@ appsettings.Production.json
 secrets.json
 *.secrets.json
 
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Uploads directory
+wwwroot/uploads/
+

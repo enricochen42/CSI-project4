@@ -1,0 +1,423 @@
+@page "/generate"
+@using FlashcardApp.Application.Interfaces
+@using FlashcardApp.Application.DTOs
+@using FlashcardApp.Application.Entities
+@using Microsoft.AspNetCore.Components
+@inject IAIGenerationService AIGenerationService
+@inject IFlashcardService FlashcardService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Generate Flashcards - Flashcard AI</PageTitle>
+
+<div class="page-container fade-in-up">
+    <div class="page-header">
+        <h1 class="page-title">AI-Generated Flashcards</h1>
+        <p class="page-subtitle">Review and edit the flashcards generated from your slides, then save them to a deck.</p>
+    </div>
+
+    @if (isGenerating)
+    {
+        <div class="generating-state modern-card">
+            <div class="generating-content">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h3>Generating flashcards with AI...</h3>
+                <p>This may take a moment. Our AI is analyzing your content and creating intelligent flashcards.</p>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-4" role="alert">
+            @errorMessage
+        </div>
+    }
+
+    @if (generatedFlashcards.Any() && !isGenerating)
+    {
+        <div class="flashcards-container modern-card">
+            <div class="flashcards-header">
+                <h2 class="flashcards-title">Generated Flashcards <span class="badge-count">@generatedFlashcards.Count</span></h2>
+                <div class="deck-selector">
+                    <select class="form-select" @bind="selectedDeckId">
+                        <option value="0">Create New Deck</option>
+                        @foreach (var deck in decks)
+                        {
+                            <option value="@deck.Id">@deck.Name</option>
+                        }
+                    </select>
+                    @if (selectedDeckId == 0)
+                    {
+                        <input type="text" class="form-control ms-2" style="width: 250px;" 
+                               placeholder="New deck name" @bind="newDeckName" />
+                    }
+                </div>
+            </div>
+            
+            <div class="flashcards-list">
+                @for (int i = 0; i < generatedFlashcards.Count; i++)
+                {
+                    var index = i;
+                    var card = generatedFlashcards[i];
+                    <div class="flashcard-item modern-card @(card.IsSelected ? "" : "disabled")">
+                        <div class="flashcard-header">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" @bind="card.IsSelected" id="check-@index" />
+                                <label class="form-check-label" for="check-@index">
+                                    Include this flashcard
+                                </label>
+                            </div>
+                            <button class="btn-remove" @onclick="() => RemoveCard(index)" title="Remove">
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div class="flashcard-content">
+                            <div class="flashcard-field">
+                                <label class="field-label">Question</label>
+                                <textarea class="form-control" rows="2" @bind="card.Question"></textarea>
+                            </div>
+                            
+                            <div class="flashcard-field">
+                                <label class="field-label">Answer</label>
+                                <textarea class="form-control" rows="4" @bind="card.Answer"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" @onclick="SaveFlashcards" disabled="@isSaving">
+                    @if (isSaving)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Save Selected Flashcards
+                </button>
+                <button class="btn btn-secondary" @onclick="Cancel">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .generating-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .generating-content h3 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: #000;
+    }
+
+    .generating-content p {
+        color: #555;
+        font-size: 1.1rem;
+        line-height: 1.7;
+    }
+
+    .flashcards-container {
+        padding: 2.5rem;
+    }
+
+    .flashcards-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .flashcards-title {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #000;
+        margin: 0;
+    }
+
+    .badge-count {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .deck-selector {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .flashcards-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+
+    .flashcards-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .flashcards-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .flashcards-list::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+
+    .flashcard-item {
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .flashcard-item.disabled {
+        opacity: 0.5;
+    }
+
+    .flashcard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-remove {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        color: #ef4444;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        line-height: 1;
+    }
+
+    .btn-remove:hover {
+        background: rgba(239, 68, 68, 0.1);
+        transform: rotate(90deg);
+    }
+
+    .flashcard-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .flashcard-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .field-label {
+        font-weight: 700;
+        color: #000;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    @@media (max-width: 768px) {
+        .flashcards-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .deck-selector {
+            flex-direction: column;
+        }
+
+        .deck-selector .form-control {
+            width: 100% !important;
+            margin-left: 0 !important;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? Text { get; set; }
+
+    private List<EditableFlashcard> generatedFlashcards = new();
+    private List<Deck> decks = new();
+    private int selectedDeckId = 0;
+    private string newDeckName = string.Empty;
+    private bool isGenerating = false;
+    private bool isSaving = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDecks();
+        
+        if (!string.IsNullOrEmpty(Text))
+        {
+            await GenerateFlashcards();
+        }
+        else
+        {
+            errorMessage = "No text content provided. Please upload a file first.";
+        }
+    }
+
+    private async Task LoadDecks()
+    {
+        decks = (await FlashcardService.GetAllDecksAsync()).ToList();
+    }
+
+    private async Task GenerateFlashcards()
+    {
+        if (string.IsNullOrEmpty(Text))
+            return;
+
+        isGenerating = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var flashcards = await AIGenerationService.GenerateFlashcardsAsync(Text);
+            
+            generatedFlashcards = flashcards.Select(f => new EditableFlashcard
+            {
+                Question = f.Question,
+                Answer = f.Answer,
+                IsSelected = true
+            }).ToList();
+
+            if (generatedFlashcards.Count == 0)
+            {
+                errorMessage = "No flashcards could be generated. The AI response might not be in the expected format. Try again or check your AI configuration.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error generating flashcards: {ex.Message}";
+        }
+        finally
+        {
+            isGenerating = false;
+        }
+    }
+
+    private void RemoveCard(int index)
+    {
+        if (index >= 0 && index < generatedFlashcards.Count)
+        {
+            generatedFlashcards.RemoveAt(index);
+        }
+    }
+
+    private async Task SaveFlashcards()
+    {
+        var selectedCards = generatedFlashcards.Where(c => c.IsSelected).ToList();
+        
+        if (!selectedCards.Any())
+        {
+            errorMessage = "Please select at least one flashcard to save.";
+            return;
+        }
+
+        if (selectedDeckId == 0 && string.IsNullOrWhiteSpace(newDeckName))
+        {
+            errorMessage = "Please enter a name for the new deck or select an existing deck.";
+            return;
+        }
+
+        isSaving = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            Deck deck;
+            
+            if (selectedDeckId == 0)
+            {
+                // Create new deck
+                deck = await FlashcardService.CreateDeckAsync(newDeckName);
+            }
+            else
+            {
+                deck = await FlashcardService.GetDeckByIdAsync(selectedDeckId);
+                if (deck == null)
+                {
+                    errorMessage = "Selected deck not found.";
+                    isSaving = false;
+                    return;
+                }
+            }
+
+            // Save flashcards
+            var flashcardsToSave = selectedCards.Select(c => new GeneratedFlashcardDto
+            {
+                Question = c.Question,
+                Answer = c.Answer
+            });
+
+            await FlashcardService.CreateFlashcardsAsync(deck.Id, flashcardsToSave);
+            
+            Navigation.NavigateTo($"/study?deckId={deck.Id}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving flashcards: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/upload");
+    }
+
+    private class EditableFlashcard
+    {
+        public string Question { get; set; } = string.Empty;
+        public string Answer { get; set; } = string.Empty;
+        public bool IsSelected { get; set; } = true;
+    }
+}
+

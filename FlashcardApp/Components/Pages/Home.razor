@@ -1,7 +1,260 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - Flashcard AI</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="hero-section fade-in-up">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            A place to create your <span class="gradient-text">masterpiece</span> flashcards
+        </h1>
+        <p class="hero-subtitle">
+            Transform your lecture slides into intelligent study flashcards using cutting-edge AI
+        </p>
+        <div class="hero-actions">
+            <a href="/upload" class="btn btn-primary btn-large">Get Started</a>
+            <a href="/study" class="btn btn-secondary btn-large">Study Now</a>
+        </div>
+    </div>
+</div>
 
-Welcome to your new app.
+<div class="features-section">
+    <div class="feature-cards">
+        <div class="feature-card modern-card">
+            <div class="feature-icon">📤</div>
+            <h3 class="feature-title">Upload & Extract</h3>
+            <p class="feature-description">Upload PDF files or images of your lecture slides. Our AI extracts all the text automatically.</p>
+            <a href="/upload" class="feature-link">Create flashcards →</a>
+        </div>
+        
+        <div class="feature-card modern-card">
+            <div class="feature-icon">🤖</div>
+            <h3 class="feature-title">AI-Powered Generation</h3>
+            <p class="feature-description">Advanced AI analyzes your content and generates intelligent flashcards tailored to your material.</p>
+        </div>
+        
+        <div class="feature-card modern-card">
+            <div class="feature-icon">📚</div>
+            <h3 class="feature-title">Study Mode</h3>
+            <p class="feature-description">Review and study your flashcards with beautiful flip animations and intuitive navigation.</p>
+            <a href="/study" class="feature-link">Start studying →</a>
+        </div>
+    </div>
+</div>
+
+<div class="how-it-works-section">
+    <h2 class="section-title">How it works</h2>
+    <div class="steps-container">
+        <div class="step-item">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>Upload your slides</h4>
+                <p>Upload PDF files of your lecture slides</p>
+            </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>AI extracts & generates</h4>
+                <p>AI automatically extracts text and generates flashcards</p>
+            </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>Review & edit</h4>
+                <p>Review and edit the generated flashcards</p>
+            </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h4>Study & master</h4>
+                <p>Save to a deck and start studying!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 4rem 0 6rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 900;
+        margin-bottom: 1.5rem;
+        line-height: 1.1;
+        color: #000;
+    }
+
+    .hero-subtitle {
+        font-size: 1.375rem;
+        color: #444;
+        margin-bottom: 2.5rem;
+        line-height: 1.7;
+        max-width: 650px;
+        margin-left: auto;
+        margin-right: auto;
+        font-weight: 400;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-large {
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+    }
+
+    .features-section {
+        padding: 4rem 0;
+    }
+
+    .feature-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+
+    .feature-card {
+        text-align: center;
+        padding: 2.5rem 2rem;
+    }
+
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+
+    .feature-title {
+        font-size: 1.625rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        color: #000;
+    }
+
+    .feature-description {
+        color: #555;
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+        font-size: 1.05rem;
+    }
+
+    .feature-link {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .feature-link:hover {
+        color: #764ba2;
+        transform: translateX(5px);
+    }
+
+    .how-it-works-section {
+        padding: 4rem 0;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .section-title {
+        text-align: center;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900;
+        margin-bottom: 3rem;
+        color: #000;
+    }
+
+    .steps-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .step-item {
+        flex: 1;
+        min-width: 200px;
+        text-align: center;
+        position: relative;
+    }
+
+    .step-number {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 auto 1rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .step-content h4 {
+        font-size: 1.3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: #000;
+    }
+
+    .step-content p {
+        color: #555;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .step-connector {
+        flex: 0 0 40px;
+        height: 2px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        margin: 0 0.5rem;
+        opacity: 0.3;
+    }
+
+    @@media (max-width: 768px) {
+        .hero-section {
+            padding: 2rem 0 4rem;
+        }
+
+        .hero-actions {
+            flex-direction: column;
+        }
+
+        .btn-large {
+            width: 100%;
+        }
+
+        .feature-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .steps-container {
+            flex-direction: column;
+        }
+
+        .step-connector {
+            width: 2px;
+            height: 40px;
+            flex: 0 0 40px;
+        }
+    }
+</style>

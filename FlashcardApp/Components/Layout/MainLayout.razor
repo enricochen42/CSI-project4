@@ -1,18 +1,30 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    <header class="modern-header">
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo-icon">✨</div>
+                <a href="/" class="logo-text">Flashcard AI</a>
+            </div>
+            <nav class="nav-links">
+                <NavLink href="" Match="NavLinkMatch.All" class="nav-link">Home</NavLink>
+                <NavLink href="upload" class="nav-link">Create</NavLink>
+                <NavLink href="study" class="nav-link">Study</NavLink>
+            </nav>
+            <div class="header-actions">
+                <button class="icon-button" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3m15.364 6.364l-4.243-4.243m-4.242 0l-4.243 4.243m8.485 0l-4.243-4.243m-4.242 0l-4.243 4.243"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
+    </header>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    <main class="main-content">
+        @Body
     </main>
 </div>
 

@@ -1,0 +1,350 @@
+@page "/study"
+@using FlashcardApp.Application.Interfaces
+@using FlashcardApp.Application.Entities
+@using Microsoft.AspNetCore.Components
+@inject IFlashcardService FlashcardService
+@rendermode InteractiveServer
+
+<PageTitle>Study - Flashcard AI</PageTitle>
+
+<div class="page-container fade-in-up">
+    <div class="page-header">
+        <h1 class="page-title">Study Mode</h1>
+        <p class="page-subtitle">Review and master your flashcards with beautiful animations</p>
+    </div>
+
+    @if (decks == null || !decks.Any())
+    {
+        <div class="empty-state modern-card">
+            <div class="empty-icon">📚</div>
+            <h3>No decks found</h3>
+            <p>Upload some slides to generate flashcards first!</p>
+            <a href="/upload" class="btn btn-primary">Create Flashcards</a>
+        </div>
+    }
+    else
+    {
+        <div class="study-controls modern-card">
+            <label class="form-label fw-bold">Select Deck:</label>
+            <select class="form-select" @bind="selectedDeckId" @bind:after="LoadFlashcards">
+                <option value="0">-- Select a deck --</option>
+                @foreach (var deck in decks)
+                {
+                    <option value="@deck.Id">@deck.Name (@deck.Flashcards.Count cards)</option>
+                }
+            </select>
+        </div>
+
+        @if (currentFlashcards != null && currentFlashcards.Any())
+        {
+            <div class="study-session">
+                <div class="study-header modern-card">
+                    <div class="card-counter">
+                        <span class="counter-text">Card <strong>@(currentIndex + 1)</strong> of <strong>@currentFlashcards.Count</strong></span>
+                    </div>
+                    <div class="study-nav">
+                        <button class="btn-nav" @onclick="PreviousCard" disabled="@(currentIndex == 0)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                            </svg>
+                            Previous
+                        </button>
+                        <button class="btn-nav" @onclick="NextCard" disabled="@(currentIndex >= currentFlashcards.Count - 1)">
+                            Next
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flashcard-wrapper">
+                    <div class="flashcard-container" @onclick="FlipCard">
+                        <div class="flashcard @(isFlipped ? "flipped" : "")">
+                            <div class="flashcard-front">
+                                <div class="flashcard-label">Question</div>
+                                <div class="flashcard-content-text">@currentFlashcards[currentIndex].Question</div>
+                                <div class="flashcard-hint">Click to reveal answer</div>
+                            </div>
+                            <div class="flashcard-back">
+                                <div class="flashcard-label">Answer</div>
+                                <div class="flashcard-content-text">@currentFlashcards[currentIndex].Answer</div>
+                                <div class="flashcard-hint">Click to flip back</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (selectedDeckId > 0)
+        {
+            <div class="alert alert-warning modern-card">
+                This deck has no flashcards yet.
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: #000;
+    }
+
+    .empty-state p {
+        color: #555;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+
+    .study-controls {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .study-session {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .study-header {
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .card-counter {
+        font-size: 1.25rem;
+        color: #555;
+        font-weight: 500;
+    }
+
+    .counter-text strong {
+        color: #000;
+        font-weight: 800;
+    }
+
+    .study-nav {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        font-weight: 600;
+        color: #000;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+        background: #fff;
+        border-color: #667eea;
+        color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .btn-nav:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .flashcard-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 500px;
+        padding: 2rem 0;
+    }
+
+    .flashcard-container {
+        perspective: 1200px;
+        width: 100%;
+        max-width: 700px;
+        height: 450px;
+    }
+
+    .flashcard {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .flashcard.flipped {
+        transform: rotateY(180deg);
+    }
+
+    .flashcard-front,
+    .flashcard-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 3rem;
+        border-radius: 24px;
+        background: #ffffff;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .flashcard-back {
+        transform: rotateY(180deg);
+        background: #f8f9ff;
+        border-color: rgba(102, 126, 234, 0.2);
+    }
+
+    .flashcard-label {
+        font-size: 1rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: #667eea;
+        margin-bottom: 2rem;
+    }
+
+    .flashcard-content-text {
+        font-size: 1.75rem;
+        font-weight: 600;
+        line-height: 1.7;
+        color: #000;
+        text-align: center;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .flashcard-hint {
+        font-size: 1rem;
+        color: #888;
+        margin-top: 1.5rem;
+        font-style: italic;
+        font-weight: 400;
+    }
+
+    @@media (max-width: 768px) {
+        .flashcard-container {
+            height: 400px;
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            padding: 2rem;
+        }
+
+        .flashcard-content-text {
+            font-size: 1.25rem;
+        }
+
+        .study-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .study-nav {
+            width: 100%;
+        }
+
+        .btn-nav {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? DeckId { get; set; }
+
+    private List<Deck> decks = new();
+    private List<Flashcard>? currentFlashcards;
+    private int selectedDeckId = 0;
+    private int currentIndex = 0;
+    private bool isFlipped = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDecks();
+        
+        if (DeckId.HasValue)
+        {
+            selectedDeckId = DeckId.Value;
+            await LoadFlashcards();
+        }
+    }
+
+    private async Task LoadDecks()
+    {
+        decks = (await FlashcardService.GetAllDecksAsync()).ToList();
+    }
+
+
+    private async Task LoadFlashcards()
+    {
+        if (selectedDeckId > 0)
+        {
+            currentFlashcards = (await FlashcardService.GetFlashcardsByDeckIdAsync(selectedDeckId)).ToList();
+            currentIndex = 0;
+            isFlipped = false;
+        }
+        else
+        {
+            currentFlashcards = null;
+        }
+    }
+
+    private void FlipCard()
+    {
+        isFlipped = !isFlipped;
+    }
+
+    private void NextCard()
+    {
+        if (currentFlashcards != null && currentIndex < currentFlashcards.Count - 1)
+        {
+            currentIndex++;
+            isFlipped = false;
+        }
+    }
+
+    private void PreviousCard()
+    {
+        if (currentIndex > 0)
+        {
+            currentIndex--;
+            isFlipped = false;
+        }
+    }
+}
+

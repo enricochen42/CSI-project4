@@ -1,0 +1,275 @@
+@page "/upload"
+@using FlashcardApp.Application.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+@inject IFileProcessingService FileProcessingService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Create - Flashcard AI</PageTitle>
+
+<div class="page-container fade-in-up">
+    <div class="page-header">
+        <h1 class="page-title">Create Your Flashcards</h1>
+        <p class="page-subtitle">Upload PDF files or images of your lecture slides to generate flashcards using AI</p>
+    </div>
+
+    <div class="upload-section modern-card">
+        <EditForm Model="@uploadModel" OnValidSubmit="@HandleFileUpload">
+            <DataAnnotationsValidator />
+            
+            <div class="upload-area">
+                <label for="fileInput" style="cursor: pointer; width: 100%; height: 100%; display: block;">
+                    <InputFile id="fileInput" OnChange="@OnFileSelected" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" />
+                    @if (selectedFile == null)
+                {
+                    <div class="upload-content">
+                        <div class="upload-icon">📄</div>
+                        <h3>Drop your file here or click to browse</h3>
+                        <p>Supported formats: PDF, JPG, PNG</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="upload-content">
+                        <div class="upload-icon">✓</div>
+                        <h3>@selectedFile.Name</h3>
+                        <p>@((selectedFile.Size / 1024.0).ToString("F2")) KB</p>
+                    </div>
+                }
+                </label>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3" role="alert">
+                    @errorMessage
+                </div>
+            }
+
+            @if (isProcessing)
+            {
+                <div class="alert alert-info mt-3" role="alert">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Processing file and extracting text...
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(extractedText))
+            {
+                <div class="extracted-text-section mt-4">
+                    <label class="form-label fw-bold">Extracted Text Preview:</label>
+                    <textarea class="form-control extracted-textarea" rows="10" readonly>@extractedText</textarea>
+                    <div class="form-text">Review the extracted text, then click "Generate Flashcards" to use AI.</div>
+                </div>
+            }
+
+            <div class="action-buttons mt-4">
+                <button type="submit" class="btn btn-primary" disabled="@(selectedFile == null || isProcessing)">
+                    @if (isProcessing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Extract Text
+                </button>
+                
+                @if (!string.IsNullOrEmpty(extractedText) && extractedText.Length >= 50)
+                {
+                    <button type="button" class="btn btn-primary" @onclick="GenerateFlashcards">
+                        Generate Flashcards with AI
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="ClearText">
+                        Clear
+                    </button>
+                }
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+<style>
+    .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .page-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900;
+        margin-bottom: 1rem;
+        color: #000;
+    }
+
+    .page-subtitle {
+        font-size: 1.25rem;
+        color: #444;
+        font-weight: 400;
+        line-height: 1.7;
+    }
+
+    .upload-section {
+        padding: 3rem;
+    }
+
+    .upload-area {
+        border: 3px dashed rgba(102, 126, 234, 0.3);
+        border-radius: 20px;
+        padding: 4rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    }
+
+    .upload-area:hover {
+        border-color: #667eea;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        transform: translateY(-2px);
+    }
+
+    .upload-content {
+        pointer-events: none;
+    }
+
+    .upload-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .upload-content h3 {
+        font-size: 1.625rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: #000;
+    }
+
+    .upload-content p {
+        color: #555;
+        font-size: 1.05rem;
+    }
+
+    .extracted-text-section {
+        margin-top: 2rem;
+    }
+
+    .extracted-textarea {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        background: #f8f9fa;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    @@media (max-width: 768px) {
+        .upload-section {
+            padding: 2rem 1.5rem;
+        }
+
+        .upload-area {
+            padding: 3rem 1.5rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+@code {
+    private IBrowserFile? selectedFile;
+    private string extractedText = string.Empty;
+    private string errorMessage = string.Empty;
+    private bool isProcessing = false;
+    private UploadModel uploadModel = new();
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        errorMessage = string.Empty;
+        extractedText = string.Empty;
+    }
+
+    private async Task HandleFileUpload()
+    {
+        if (selectedFile == null)
+        {
+            errorMessage = "Please select a file first.";
+            return;
+        }
+
+        isProcessing = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            // Save the file
+            using var stream = selectedFile.OpenReadStream();
+            var filePath = await FileProcessingService.SaveFileAsync(stream, selectedFile.Name);
+
+            // Extract text if PDF
+            if (FileProcessingService.IsPdfFile(selectedFile.Name))
+            {
+                extractedText = await FileProcessingService.ExtractTextFromPdfAsync(filePath);
+                
+                if (string.IsNullOrWhiteSpace(extractedText))
+                {
+                    errorMessage = "No text could be extracted from the PDF. The file might be image-based or corrupted.";
+                }
+            }
+            else if (FileProcessingService.IsImageFile(selectedFile.Name))
+            {
+                errorMessage = "Image OCR is not yet implemented. Please upload a PDF file for now.";
+            }
+            else
+            {
+                errorMessage = "Unsupported file format. Please upload a PDF or image file.";
+            }
+
+            // If we have text, show it and allow user to proceed to generation
+            if (string.IsNullOrWhiteSpace(extractedText) || extractedText.Length < 50)
+            {
+                errorMessage = "Not enough text extracted. The file might be image-based. Please ensure your PDF contains selectable text.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error processing file: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private void ClearText()
+    {
+        extractedText = string.Empty;
+        selectedFile = null;
+    }
+
+    private void GenerateFlashcards()
+    {
+        if (!string.IsNullOrWhiteSpace(extractedText) && extractedText.Length >= 50)
+        {
+            Navigation.NavigateTo($"/generate?text={Uri.EscapeDataString(extractedText)}");
+        }
+    }
+
+    public class UploadModel
+    {
+        // Placeholder for form model
+    }
+}
+
