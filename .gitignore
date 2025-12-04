@@ -9,6 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.sln
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -394,5 +395,5 @@ secrets.json
 *.db-wal
 
 # Uploads directory
-wwwroot/uploads/
+FlashcardApp/wwwroot/uploads
 

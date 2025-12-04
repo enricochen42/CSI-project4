@@ -28,10 +28,13 @@ catch
 if (builder.Environment.IsDevelopment() && string.IsNullOrEmpty(builder.Configuration["Groq:ApiKey"]))
 {
     try
-    {
+    {   
+        // Construct path to secrets.json based on standard User Secrets location (cross-platform)
         var secretsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Microsoft", "UserSecrets", "FlashcardApp-Secrets", "secrets.json");
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".microsoft", "usersecrets", builder.Configuration["UserSecretsId"] ?? "FlashcardApp-Secrets",
+            "secrets.json"
+        );
         
         if (File.Exists(secretsPath))
         {

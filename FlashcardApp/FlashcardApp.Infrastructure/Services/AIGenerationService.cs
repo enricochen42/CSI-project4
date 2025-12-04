@@ -31,52 +31,31 @@ public class AIGenerationService : IAIGenerationService
             // Debug: Log if API key is found (without exposing the key)
             if (string.IsNullOrEmpty(groqApiKey))
             {
-                _logger.LogWarning("Groq API key not found in configuration. Checked: Groq:ApiKey and Groq__ApiKey");
-            }
-            else
-            {
-                _logger.LogInformation("Groq API key found (length: {Length})", groqApiKey.Length);
-            }
-            
-            if (!string.IsNullOrEmpty(groqApiKey))
-            {
-                try
-                {
-                    var model = _configuration["Groq:Model"] ?? "llama-3.1-8b-instant";
-                    return await GenerateWithGroqAsync(textContent, groqApiKey, model);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Groq generation failed, trying fallback");
-                    // Fall through to try other options
-                }
+                throw new Exception(
+                    "No Groq API key configured. " +
+                    "Please set it using one of these methods:\n" +
+                    "1. Environment variable: $env:Groq__ApiKey = 'your-key-here' (PowerShell) or export Groq__ApiKey='your-key-here' (bash)\n" +
+                    "2. User Secrets: dotnet user-secrets set \"Groq:ApiKey\" \"your-key-here\"\n" +
+                    "3. appsettings.Development.json: Add your API key to the Groq section\n" +
+                    "\nGet your free API key at: https://console.groq.com/"
+                );
             }
 
-            // Try HuggingFace next
-            var huggingFaceApiKey = _configuration["HuggingFace:ApiKey"] ?? "";
-            if (!string.IsNullOrEmpty(huggingFaceApiKey))
+            var model = _configuration["Groq:Model"] ?? "llama-3.1-8b-instant";
+            try
             {
-                try
-                {
-                    var model = _configuration["HuggingFace:Model"] ?? "mistralai/Mistral-7B-Instruct-v0.2";
-                    return await GenerateWithHuggingFaceAsync(textContent, huggingFaceApiKey, model);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "HuggingFace generation failed");
-                    throw new Exception("Hugging Face API error. Please check your API key or try Groq instead.");
-                }
+                return await GenerateWithGroqAsync(textContent, groqApiKey, model);
             }
+            catch (Exception ex)
+            {
+                // If it's a rate limit error or any other Groq failure, throw exception
+                if (ex.Message.Contains("TooManyRequests") || ex.Message.Contains("rate_limit_exceeded"))
+                {
+                    throw new Exception("Groq API rate limit exceeded. Please wait and try again later.", ex);
+                }
 
-            // No API keys configured - give clear error message
-            throw new Exception(
-                "No AI API key configured. " +
-                "Please set your Groq API key using one of these methods:\n" +
-                "1. Environment variable: $env:Groq__ApiKey = 'your-key-here' (PowerShell) or export Groq__ApiKey='your-key-here' (bash)\n" +
-                "2. User Secrets: dotnet user-secrets set \"Groq:ApiKey\" \"your-key-here\"\n" +
-                "3. appsettings.Development.json: Add your API key to the Groq section\n" +
-                "\nGet your free API key at: https://console.groq.com/"
-            );
+                throw new Exception($"Groq generation failed: {ex.Message}", ex);
+            }
         }
         catch (Exception ex)
         {
