@@ -294,10 +294,14 @@
     private string errorMessage = string.Empty;
     private string textContent = string.Empty;
 
+    private bool hasGenerated = false;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadDecks();
-        
+
+        if (hasGenerated) return;
+
         // Try to get text from token first (new method)
         if (!string.IsNullOrEmpty(Token))
         {
@@ -306,6 +310,7 @@
             {
                 textContent = retrievedText;
                 await GenerateFlashcards();
+                hasGenerated = true;
                 return;
             }
         }
@@ -315,11 +320,11 @@
         {
             textContent = Text;
             await GenerateFlashcards();
+            hasGenerated = true;
+            return;
         }
-        else
-        {
-            errorMessage = "Oops! Looks like we don't have any content to work with. Please upload your slides first.";
-        }
+
+        errorMessage = "Oops! Looks like we don't have any content to work with. Please upload your slides first.";        
     }
 
     private async Task<string?> RetrieveTextFromToken(string token)
