@@ -12,7 +12,7 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load User Secrets - try multiple methods to ensure it works
+// Load User Secrets - try multiple methods to ensure it works cross-platform
 // Try standard User Secrets first
 try
 {
@@ -25,16 +25,32 @@ catch
 
 // Manual fallback: If API key not loaded, read secrets.json directly in Development mode
 // This ensures the API key is available even if User Secrets isn't loaded properly
+// This works on both Windows and Mac/Linux
 if (builder.Environment.IsDevelopment() && string.IsNullOrEmpty(builder.Configuration["Groq:ApiKey"]))
 {
     try
-    {   
+    {
+        // UserSecretsId from .csproj file (FlashcardApp-Secrets)
+        // This matches the UserSecretsId property in FlashcardApp.csproj
+        const string userSecretsId = "FlashcardApp-Secrets";
+        
         // Construct path to secrets.json based on standard User Secrets location (cross-platform)
-        var secretsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".microsoft", "usersecrets", builder.Configuration["UserSecretsId"] ?? "FlashcardApp-Secrets",
-            "secrets.json"
-        );
+        // Windows: %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json
+        // Mac/Linux: ~/.microsoft/usersecrets/<UserSecretsId>/secrets.json
+        string secretsPath;
+        
+        if (OperatingSystem.IsWindows())
+        {
+            // Windows path: %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            secretsPath = Path.Combine(appDataPath, "Microsoft", "UserSecrets", userSecretsId, "secrets.json");
+        }
+        else
+        {
+            // Mac/Linux path: ~/.microsoft/usersecrets/<UserSecretsId>/secrets.json
+            var homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            secretsPath = Path.Combine(homePath, ".microsoft", "usersecrets", userSecretsId, "secrets.json");
+        }
         
         if (File.Exists(secretsPath))
         {
@@ -52,9 +68,11 @@ if (builder.Environment.IsDevelopment() && string.IsNullOrEmpty(builder.Configur
             }
         }
     }
-    catch
+    catch (Exception ex)
     {
-        // Silently fail - user will get error when trying to use API
+        // Log the error but don't fail - user will get error when trying to use API
+        // This allows the app to start even if secrets can't be loaded
+        System.Diagnostics.Debug.WriteLine($"Failed to load User Secrets fallback: {ex.Message}");
     }
 }
 
