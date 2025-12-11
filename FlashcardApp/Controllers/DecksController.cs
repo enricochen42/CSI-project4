@@ -18,9 +18,6 @@ public class DecksController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all flashcard decks
-    /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<Deck>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<Deck>>> GetAllDecks()
@@ -37,9 +34,6 @@ public class DecksController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get a specific deck by ID
-    /// </summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(Deck), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -63,9 +57,6 @@ public class DecksController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Create a new flashcard deck
-    /// </summary>
     [HttpPost]
     [ProducesResponseType(typeof(Deck), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -92,9 +83,6 @@ public class DecksController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get all flashcards in a deck
-    /// </summary>
     [HttpGet("{id}/flashcards")]
     [ProducesResponseType(typeof(IEnumerable<Flashcard>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -102,7 +90,6 @@ public class DecksController : ControllerBase
     {
         try
         {
-            // Verify deck exists
             var deck = await _flashcardService.GetDeckByIdAsync(id);
             if (deck == null)
             {
@@ -119,9 +106,6 @@ public class DecksController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Create a flashcard in a deck
-    /// </summary>
     [HttpPost("{id}/flashcards")]
     [ProducesResponseType(typeof(Flashcard), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -140,7 +124,6 @@ public class DecksController : ControllerBase
                 return BadRequest("Answer is required");
             }
 
-            // Verify deck exists
             var deck = await _flashcardService.GetDeckByIdAsync(id);
             if (deck == null)
             {

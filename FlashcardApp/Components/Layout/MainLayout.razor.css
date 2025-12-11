@@ -38,16 +38,6 @@
     text-decoration: none;
 }
 
-.logo-icon {
-    font-size: 1.75rem;
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
-}
-
 .logo-text {
     font-size: 1.75rem;
     font-weight: 500;
