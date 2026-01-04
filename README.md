@@ -63,32 +63,37 @@ The app uses SQLite (stored as `flashcards.db` in the project root). The databas
 - The app automatically loads User Secrets in Development mode
 
 ## Screenshots
-<figure align="center">
+<div align="center">
   <img src="Screenshots/Home.png">
-  <figcaption><em>Figure 1 - Home Page</em></figcaption>
-</figure> 
+  <br>
+  <em>Figure 1 - Home Page</em>
+</div> 
 <br>
 
-<figure align="center">
+<div align="center">
   <img src="Screenshots/Create.png">
-  <figcaption><em>Figure 2 - Create Page</em></figcaption>
-</figure>
+  <br>
+  <em>Figure 2 - Create Page</em>
+</div>
 <br>
 
-<figure align="center">
+<div align="center">
   <img src="Screenshots/Ready.png">
-  <figcaption><em>Figure 3 - The page after the AI finishes generating the flashcards.</em></figcaption>
-</figure>
+  <br>
+  <em>Figure 3 - The page after the AI finishes generating the flashcards.</em>
+</div>
 <br>
 
-<figure align="center">
+<div align="center">
   <img src="Screenshots/Question.png">
-  <figcaption><em>Figure 4 - Study Page with an Example Question</em></figcaption>
-</figure>
+  <br>
+  <em>Figure 4 - Study Page with an Example Question</em>
+</div>
 <br>
 
-<figure align="center">
+<div align="center">
   <img src="Screenshots/Answer.png">
-  <figcaption><em>Figure 5 - Study Page with an Example Answer</em></figcaption>
-</figure>
+  <br>
+  <em>Figure 5 - Study Page with an Example Answer</em>
+</div>
 <br>
