@@ -2,6 +2,41 @@
 
 An AI-powered flashcard application that helps you create study flashcards from lecture slides.
 
+## Screenshots
+<div align="center">
+  <img src="Screenshots/Home.png">
+  <br>
+  <em>Figure 1 - Home Page</em>
+</div> 
+<br>
+
+<div align="center">
+  <img src="Screenshots/Create.png">
+  <br>
+  <em>Figure 2 - Create Page</em>
+</div>
+<br>
+
+<div align="center">
+  <img src="Screenshots/Ready.png">
+  <br>
+  <em>Figure 3 - The page after the AI finishes generating the flashcards.</em>
+</div>
+<br>
+
+<div align="center">
+  <img src="Screenshots/Question.png">
+  <br>
+  <em>Figure 4 - Study Page with an Example Question</em>
+</div>
+<br>
+
+<div align="center">
+  <img src="Screenshots/Answer.png">
+  <br>
+  <em>Figure 5 - Study Page with an Example Answer</em>
+</div>
+
 ## Features
 
 - 📤 **Upload Slides**: Upload PDF files of your lecture slides
@@ -62,38 +97,3 @@ The app uses SQLite (stored as `flashcards.db` in the project root). The databas
 - Each team member sets their own API key
 - The app automatically loads User Secrets in Development mode
 
-## Screenshots
-<div align="center">
-  <img src="Screenshots/Home.png">
-  <br>
-  <em>Figure 1 - Home Page</em>
-</div> 
-<br>
-
-<div align="center">
-  <img src="Screenshots/Create.png">
-  <br>
-  <em>Figure 2 - Create Page</em>
-</div>
-<br>
-
-<div align="center">
-  <img src="Screenshots/Ready.png">
-  <br>
-  <em>Figure 3 - The page after the AI finishes generating the flashcards.</em>
-</div>
-<br>
-
-<div align="center">
-  <img src="Screenshots/Question.png">
-  <br>
-  <em>Figure 4 - Study Page with an Example Question</em>
-</div>
-<br>
-
-<div align="center">
-  <img src="Screenshots/Answer.png">
-  <br>
-  <em>Figure 5 - Study Page with an Example Answer</em>
-</div>
-<br>
